@@ -1,0 +1,113 @@
+---
+title: "text-management"
+author: "Annie Georgeson"
+format: pdf
+editor: visual
+---
+
+# Load libraries:
+
+```{r}
+library(tidyverse)
+library(stringr)
+library(dplyr)
+
+```
+
+# Load in CSV file:
+
+```{r}
+tree_data = read_csv(here::here("raw_tree_data.csv"))
+head(tree_data)
+
+```
+
+# Creating a separate column for city:
+
+```{r}
+tree_data$city_name = str_extract(tree_data$City, "^([^,]+)")
+
+```
+
+# Creating a separate column for state:
+
+```{r}
+tree_data$state_name = str_extract(tree_data$City, "[:upper:]+$")
+print(tree_data)
+
+```
+
+# Table showing the amount of records in each state:
+
+```{r}
+state_record = tree_data |>
+  group_by(state_name) |>
+  summarize(count = n()) |>
+  ungroup()
+
+print(state_record)
+```
+
+## There was 13 states included in the data record. Arizona had 827 records, California had 4,062 records, Colorado had 867 records, Florida had 895 records, Hawaii had 918 records, Idaho had 923 records, Indiana had 877 records, Minnesota had 760 records, North Carolina had 828 records, New Mexico had 833 records, New York had 831 records, South Carolina had 872 records, and Washington had 994 records.
+
+# Filtering the data to have only records from North and South Carolina:
+
+```{r}
+filtered_tree_data = tree_data |>
+  filter(state_name %in% c("NC", "SC"))
+
+```
+
+# NC & SC Cities Data Collection:
+
+```{r}
+city_nc_sc = filtered_tree_data |>
+  group_by(city_name) |>
+  summarize(count = n()) |>
+  ungroup()
+
+print(city_nc_sc)
+```
+
+## They collected data from Charlotte, North Carolina and Charleston, South Carolina.
+
+# Creating a new genus column for the filtered data:
+
+```{r}
+filtered_tree_data$genus = str_extract(filtered_tree_data$ScientificName, "^[^\\s]+")
+head(filtered_tree_data)
+
+```
+
+# Calculating the average diameter per NC & SC genus from highest to lowest:
+
+```{r}
+average_crown_diameter = filtered_tree_data |>
+  group_by(genus) |>
+  summarize(average_crown_diameter = mean(`AvgCdia (m)`, na.rm = TRUE)) |>
+  arrange(desc(average_crown_diameter)) |>
+  ungroup()
+
+print(average_crown_diameter)
+
+```
+
+## The tree genus *Quercus* has the largest crown diameter in North and South Carolina. The genus has an average crown diameter of approximately 13.6 meters.
+
+# EC: Calculating the average age per NC & SC genus from highest to lowest:
+
+```{r}
+average_genus_age = filtered_tree_data |>
+  group_by(genus) |>
+  summarize(average_genus_age = mean(Age, na.rm = TRUE)) |>
+  arrange(desc(average_genus_age)) |>
+  ungroup()
+
+print(average_genus_age)
+```
+
+## The mean ages of the tree genera range from approximately 12 years to 35 years. The tree genus *Quercus* is the oldest on average with a mean of 35.55 years. Since the oldest genus has the largest crown diameter, this could hint at the fact that there is a relationship between age and crown diameter. This fundamentally makes sense because the longer trees age and grow, the larger they become which could increase their crown diameter.
+
+```         
+Link to repository: https://github.com/anniegeorgeson/text-management-hw.git
+```
